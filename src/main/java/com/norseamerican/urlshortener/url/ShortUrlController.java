@@ -1,11 +1,15 @@
 package com.norseamerican.urlshortener.url;
 
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,11 +37,16 @@ class ShortUrlController {
 
   @ApiOperation(value = "Retrieve an url", response = Url.class)
   @GetMapping("short/{id}")
-  String one(@PathVariable String id) {
+  ResponseEntity<String> one(@PathVariable String id) throws Exception {
 
-    return repository.findById(Url.deHashId(id))
-      .orElseThrow(() -> new IllegalArgumentException("Could not find url " + id))
-      .getUrl();
+    Url url = repository.findById(Url.deHashId(id))
+        .orElseThrow(() -> new IllegalArgumentException("Could not find url for " + id));
+    String location = url.getUrl();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setLocation(new URI(location));
+
+    return ResponseEntity.status(HttpStatus.FOUND).headers(headers).body(location);
   }
 
 }
